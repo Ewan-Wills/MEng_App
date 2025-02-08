@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+  <script src="https://d3js.org/d3.v4.js"></script>
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="styles.css" />
@@ -10,24 +11,11 @@
 
   <body>
     <main class="container">
-      <h1>Welcome to Tauri</h1>
+      <h1>MEng Project App</h1>
+      
+      <svg style="" id="myPlot" style="width:500px;height:500px"></svg>
 
-      <div class="row">
-        <a href="https://tauri.app" target="_blank">
-          <img src="/assets/tauri.svg" class="logo tauri" alt="Tauri logo" />
-        </a>
-        <a
-          href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"
-          target="_blank"
-        >
-          <img
-            src="/assets/javascript.svg"
-            class="logo vanilla"
-            alt="JavaScript logo"
-          />
-        </a>
-      </div>
-      <p>Click on the Tauri logo to learn more about the framework</p>
+      <button id="update-button" placeholder="update graph"></button>
 
       <form class="row" id="greet-form">
         <input id="greet-input" placeholder="Enter a name..." />
