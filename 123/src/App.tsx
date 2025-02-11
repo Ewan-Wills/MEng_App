@@ -35,12 +35,14 @@ function App() {
 
     // Set Dimensions
 
-    const xSize = 250;
-    const ySize = 500;
-    const margin = 50;
+    const xSize = 300;
+    const ySize = 375;
+    const margin = 0;
+    const padding = 50;
     
-    const yMax = ySize - margin * 2;
-
+    //const yMax = ySize - margin * 2;
+    const yMax = ySize - padding ;
+    const xMax = xSize - padding;
     var numPoints = 0;
     const maxPoints = 10;
 
@@ -56,7 +58,7 @@ function App() {
     }
 
     async function plot() {
-        let xMax = ((document.getElementById('myPlot')?.clientWidth)|| 100)-margin*2;
+        
         var thisDataPacket: DataPacket = {
             index: 0,
             packetNumber: numPoints,
@@ -82,11 +84,11 @@ function App() {
         // X Axis
         const x = d3.scaleLinear()
             .domain([0, 500])
-            .range([margin,xMax]);
+            .range([padding/2,xMax]);
 
         let xAxisGenerator = d3.axisBottom(x);
         xAxisGenerator.ticks(maxPoints);
-        xAxisGenerator.tickSize(-yMax);
+        xAxisGenerator.tickSize(5);
         xAxisGenerator.tickFormat((d, i) => {
             if (dataPacketList[i]) {
                 return (dataPacketList[i].index);
@@ -99,29 +101,33 @@ function App() {
 
         svg.append("g")
             .call(xAxisGenerator)
-            .attr("transform", "translate(0," + yMax + ")")
+            .attr("transform", "translate("+padding/2+ "," + (yMax+padding/2) + ")")
             ;
 
+        //warning: janky way of selecting only x axis text...
         svg.selectAll("text")
             .attr("font-size", "10")
             .attr("transform", "rotate(45)")
+            ;
+
         // Y Axis
         const y = d3.scaleLinear()
-            .domain([0, 500])
-            .range([yMax, 0]);
+            .domain([35, 41])
+            .range([yMax,0]);
 
         svg.append("g")
-            .call(d3.axisLeft(y));
+            .call(d3.axisLeft(y))
+            .attr("transform", "translate("+padding+ ","+(padding/2)+")");
 
         // Dots
         svg.append('g')
             .selectAll("dot")
             .data(dataPacketList).enter()
             .append("circle")
-            .attr("cx", function (d) { return (d.index * (xMax / maxPoints)) })
-            .attr("cy", function (d) { return d.temp })
+            .attr("cx", function (d) { return (d.index * ((xMax-padding/2) / maxPoints)+padding) })
+            .attr("cy", function (d) { return d.temp+padding/2 })
             .attr("r", 3)
-            .style("fill", "Red");
+            .style("fill", "Red")
 
         // Add the line
         svg.append("path")
@@ -130,8 +136,8 @@ function App() {
             .attr("stroke", "steelblue")
             .attr("stroke-width", 1.5)
             .attr("d", d3.line()
-                .x(function (d) { return (d.index * (xMax / maxPoints)) })
-                .y(function (d) { return (d.temp) })
+                .x(function (d) { return (d.index * ((xMax-padding/2) / maxPoints)+padding) })
+                .y(function (d) { return (d.temp+padding/2) })
             );
 
         //text on the points
@@ -139,8 +145,8 @@ function App() {
             .data(dataPacketList)
             .enter().append("text")
             // .attr("class", "text_on_point")
-            .attr("x", function (d) { return (d.index * (xMax / maxPoints)); })
-            .attr("y", function (d) { return (d.temp); })
+            .attr("x", function (d) { return (d.index * ((xMax-padding/2) / maxPoints)+padding); })
+            .attr("y", function (d) { return (d.temp+padding/2); })
             .text(function (d) { return d.packetNumber; });
 
         svg.selectAll(".text")
@@ -162,22 +168,23 @@ function App() {
     return (
         /* <p>{avial() ? "true" : "false"}</p> */
 
-        <main class="container">
-            <h1>MEng Project App</h1>
+        <main  >
+            <div class="justify-self-center flex-grow text-center" >
+                <h1 class="" >MEng Project App</h1>
 
-            <svg id="myPlot" style="width:100%;height:500px;"></svg>
-            {/* TODO: Michael */}
-            <button id="update-button" onclick={() => {
-                console.log("new data");
-                // scan({ type: "tag" }).catch(() => {
-                //     console.log("123")
-                // }).then(() => {
-                //     console.log("23234")
-                // }).finally(() => {
-                //     console.log("12344")
-                // });
-                plot();
-            }}>Update Graph</button>
+                <svg id="myPlot" class="w-full h-96"></svg>
+                <button id="update-button" onclick={() => {
+                    console.log("new data");
+                    // scan({ type: "tag" }).catch(() => {
+                    //     console.log("123")
+                    // }).then(() => {
+                    //     console.log("23234")
+                    // }).finally(() => {
+                    //     console.log("12344")
+                    // });
+                    plot();
+                }}>Update Graph</button>
+            </div>
         </main>
     );
 }
