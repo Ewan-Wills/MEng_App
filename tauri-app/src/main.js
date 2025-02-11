@@ -1,5 +1,5 @@
 import { isAvailable } from '@tauri-apps/plugin-nfc';
-const {isAvailable} = window.__TAURI__.plugin-nfc;
+const {isAvailable} = window.
 const canScanNfc = await isAvailable();
 
 console.log(canScanNfc);

@@ -3,7 +3,9 @@
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
-
+  width: 100%;
+  margin: 0;
+  padding: 0;
   color: #0f0f0f;
   background-color: #f6f6f6;
 
@@ -16,9 +18,10 @@
 
 .container {
   margin: 0;
+  width: 100%;
   padding-top: 10vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   text-align: center;
 }
