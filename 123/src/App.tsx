@@ -133,7 +133,7 @@ function App() {
         svg.append("path")
             .datum(dataPacketList)
             .attr("fill", "none")
-            .attr("stroke", "steelblue")
+            .attr("stroke", "black")
             .attr("stroke-width", 1.5)
             .attr("d", d3.line()
                 .x(function (d) { return (d.index * ((xMax-padding/2) / maxPoints)+padding) })
@@ -167,13 +167,14 @@ function App() {
 
     return (
         /* <p>{avial() ? "true" : "false"}</p> */
-
-        <main  >
-            <div class="justify-self-center flex-grow text-center" >
-                <h1 class="" >MEng Project App</h1>
+   
+        <main class="flex-col justify-content-center content-center h-screen bg-linear-180 from-red-500 to-cyan-500" >
+            <div class="justify-self-center h-fit text-center" >
+                <h1 class="tracking-wide font-semibold text-3xl" >Vital Sign Monitor</h1>
+                <h1 class="text-base" >Hold phone to device to get reading</h1>
 
                 <svg id="myPlot" class="w-full h-96"></svg>
-                <button id="update-button" onclick={() => {
+                <button class="w-full h-10 rounded-2xl border-2" id="update-button" onclick={() => {
                     console.log("new data");
                     // scan({ type: "tag" }).catch(() => {
                     //     console.log("123")
