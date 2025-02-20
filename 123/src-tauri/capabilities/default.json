@@ -5,6 +5,13 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "opener:default"
+    "opener:default",
+    "blec:allow-connect",
+    "blec:allow-scan",
+    "blec:allow-subscribe-string",
+    "blec:allow-send-string",
+    "blec:allow-recv-string",
+    "blec:allow-connection-state",
+    "blec:allow-disconnect"
   ]
 }
