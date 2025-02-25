@@ -12,6 +12,9 @@
     "blec:allow-send-string",
     "blec:allow-recv-string",
     "blec:allow-connection-state",
-    "blec:allow-disconnect"
+    "blec:allow-disconnect",
+    "blec:allow-stop-scan",
+    "blec:allow-scanning-state",
+    "blec:allow-unsubscribe"
   ]
 }

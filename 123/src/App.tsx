@@ -31,47 +31,112 @@ function App() {
 
     //var dataPacket = {'index':index(),'packetNumber':Number, 'time':String, 'temp':Number};
     let dataPacketList: DataPacket[] = [];
-
+    const deviceName = "EW-ESP"
+    const deviceAddress = "4C:EB:D6:6E:11:32";
     const ESPOUT_CHARACTERISTIC_UUID = "cb6079df-c22b-4057-a25a-54cea28247e5";
     const APPOUT_CHARACTERISTIC_UUID = "5025585f-5363-43d9-888b-2ab9e77096ed";
 
+    var deviceFound: boolean;
+    var connected: Number;
+    var subscribed: Number;
+    connected = -1;//-1 is not connected, 0 is attempting and 1 is connected
+    subscribed = -1; 
+    deviceFound = false;
     // const ESPaddress:string = "4CEBD66E1132";
 
-    const dataBox = d3.select("#connectedBox");
 
-    function deviceHandler(devices: BleDevice[]) {
-        document.getElementById("scanBox").innerHTML = devices;
-        console.log(devices);
+
+    function scanDeviceHandler(devices: BleDevice[]) {
+        deviceFound = false;
+        for (let i = 0; i < devices.length; i++) {
+
+            if (devices[i].name == deviceName) {
+                //console.log(devices[i]);
+                deviceFound = true;
+                stopScan();
+                if (connected == -1) {
+                    connected = 0;
+                    //console.log("New conn handler");
+                    connectBtn();
+                };
+                break;
+            }
+        }
+    };
+    function scanUpdateHandler(scanning: boolean) {
+        
+        if (deviceFound == true) {
+            //document.getElementById("scanBox")!.innerHTML = "Device found, attempting to connect...";
+            if (connected == 1) {
+                //document.getElementById("scanBox")!.innerHTML = "Device connected";
+            }
+        } else {
+            if (scanning == false) {
+                //document.getElementById("scanBox")!.innerHTML = "Device not found. Try again";
+            }
+
+            if (scanning == true) {
+                //document.getElementById("scanBox")!.innerHTML = "Searching for device...";
+            }
+        }
+
     }
     function subHandler(data: string) {
+        //console.log("New sub handler");
         var str = decodeURIComponent(escape(data));
-        document.getElementById("dataBox").innerHTML = str;
-        console.log(str);
+        document.getElementById("dataBox")!.innerHTML = str;
+        var thisDataPacket: DataPacket = {
+            index: 0,
+            packetNumber: numPoints,
+            time: Date.now().toString(), // TODO: what you need to do
+            //value between 28 and 42. rand()*14 = 0 -> 14, +28 => 28->42
+            temp: parseInt(str)
+        }
+        plot(thisDataPacket);
+
+    }
+    async function connectionHandler(x: boolean) {
+        //console.log("New conn handler");
+        if (x) {
+            if (connected==-1){
+                console.log("new connection");
+                document.getElementById("connectBtn")!.innerHTML = 'Disconnect';
+                document.getElementById("subBtn")!.style.visibility  = 'visible';
+            }
+            connected = 1;
+            //document.getElementById("scanBox")!.innerHTML = "Device connected";
+
+        } else {
+            connected = -1;
+            //document.getElementById("scanBox")!.innerHTML = "Device not connected";
+
+            document.getElementById("connectBtn")!.innerHTML = "Connect";
+            document.getElementById("subBtn")!.style.visibility  = 'hidden';
+        }
+
         
     }
-    function connectionHandler(x: boolean) {
-        if (x) {
-            document.getElementById("connectedBox").innerHTML = "Device connected";
-            
-        } else {
-            document.getElementById("connectedBox").innerHTML = "Device not connected";
-        }
-        console.log("connected:", x);
-    }
     async function scanBtn() {
-        startScan(function (d) { deviceHandler(d) }, 5000);
-    }
-    async function connectBtn() {
+        getScanningUpdates(function (d) { scanUpdateHandler(d) });
 
-        let address = "4C:EB:D6:6E:11:32";
-        await connect(address, () => console.log('disconnected'));
+        startScan(function (d) { scanDeviceHandler(d) }, 2000);
+
+    }
+    function connectBtn() {
+        console.log("Attempting to connect to", deviceAddress);
         getConnectionUpdates(function (x: boolean) { connectionHandler(x) });
-
+        connect(deviceAddress, () => {
+            console.log('disconnected');
+            //document.getElementById("scanBox").innerHTML = "Disconnected"; 
+        });
     }
 
-    async function disconnectBtn() {       
+    async function disconnectBtn() {
+        connected = -1;
+        subscribed=-1;
+        unsubscribe(ESPOUT_CHARACTERISTIC_UUID);
         await disconnect();
-        getConnectionUpdates(function (x: boolean) { connectionHandler(x) });
+
     }
 
     async function readBtn() {
@@ -80,17 +145,22 @@ function App() {
 
         var str = decodeURIComponent(escape(badstr));
 
-        console.log(str);
+        //console.log(str);
         //
     }
     async function writeBtn() {
-        var x = document.getElementById("writeData").value;
+        var x = document.getElementById("writeData")!.value;
         var str = decodeURIComponent(escape(x));
         await sendString(APPOUT_CHARACTERISTIC_UUID, str, "withoutResponse");
     }
 
     async function subBtn() {
-        subscribeString(ESPOUT_CHARACTERISTIC_UUID, function (d) { subHandler(d) });
+        if (subscribed==-1){
+            subscribed=1;
+            subscribeString(ESPOUT_CHARACTERISTIC_UUID, function (d) { subHandler(d) });
+        }else{
+            
+        }
     }
 
     function updateIndex() {
@@ -100,15 +170,22 @@ function App() {
             }
         }
     }
-    async function plot() {
-
-        var thisDataPacket: DataPacket = {
-            index: 0,
-            packetNumber: numPoints,
-            time: Date.now().toString(), // TODO: what you need to do
-            temp: Math.random() * yMax
+    async function plot(dataPacket:DataPacket) {
+        if (!dataPacket){
+            var thisDataPacket: DataPacket = {
+                index: 0,
+                packetNumber: numPoints,
+                time: Date.now().toString(), // TODO: what you need to do
+                //value between 28 and 42. rand()*14 = 0 -> 14, +28 => 28->42
+                temp: ((Math.random() * 14) + 28)
+            }
+            dataPacketList.push(thisDataPacket);
         }
-        dataPacketList.push(thisDataPacket);
+
+        else{
+            dataPacketList.push(dataPacket);
+        }
+        
 
 
         if (dataPacketList.length >= maxPoints + 1) {
@@ -155,7 +232,7 @@ function App() {
 
         // Y Axis
         const y = d3.scaleLinear()
-            .domain([35, 41])
+            .domain([28, 42])
             .range([yMax, 0]);
 
         svg.append("g")
@@ -168,9 +245,11 @@ function App() {
             .data(dataPacketList).enter()
             .append("circle")
             .attr("cx", function (d) { return (d.index * ((xMax - padding / 2) / maxPoints) + padding) })
-            .attr("cy", function (d) { return d.temp + padding / 2 })
+            .attr("cy", function (d) { return (((-(d.temp) + 28) * yMax / 14 + yMax + padding / 2)) }) // what the fuck have i done. This was mostly trial and error
             .attr("r", 3)
             .style("fill", "Red")
+
+        // (ymax * (temp - min) / (max - min)) + padding
 
         // Add the line
         svg.append("path")
@@ -180,7 +259,7 @@ function App() {
             .attr("stroke-width", 1.5)
             .attr("d", d3.line()
                 .x(function (d) { return (d.index * ((xMax - padding / 2) / maxPoints) + padding) })
-                .y(function (d) { return (d.temp + padding / 2) })
+                .y(function (d) { return ((-(d.temp) + 28) * yMax / 14 + yMax + padding / 2); })
             );
 
         //text on the points
@@ -189,8 +268,8 @@ function App() {
             .enter().append("text")
             // .attr("class", "text_on_point")
             .attr("x", function (d) { return (d.index * ((xMax - padding / 2) / maxPoints) + padding); })
-            .attr("y", function (d) { return (d.temp + padding / 2); })
-            .text(function (d) { return d.packetNumber; });
+            .attr("y", function (d) { return ((-(d.temp) + 28) * yMax / 14 + yMax + padding / 2); })
+            .text(function (d) { return null; });
 
 
 
@@ -200,7 +279,6 @@ function App() {
 
 
     }
-    let response = 'None';
 
 
     return (
@@ -212,39 +290,26 @@ function App() {
                 <h1 class="text-base" >Hold phone to device to get reading</h1>
 
                 <svg id="myPlot" class="w-full h-96"></svg>
-                <button class="w-full h-10 rounded-2xl border-2" id="update-button" onclick={() => {
-                    console.log("new data");
-                    // scan({ type: "tag" }).catch(() => {
-                    //     console.log("123")
-                    // }).then(() => {
-                    //     console.log("23234")
-                    // }).finally(() => {
-                    //     console.log("12344")
-                    // });
-                    plot();
-                }}>Update Graph</button>
+
             </div>
 
+            <button class="w-full h-10 rounded-2xl border-2" id="update-button" onclick={() => {
+                    plot(null);
+            }}>Add Random Point to Graph</button>
 
-            <button class="w-full h-10 rounded-2xl border-2" onclick={() => {
-                
-                scanBtn();
-
-            }}>Scan</button>
-
-            <button class="w-full h-10 rounded-2xl border-2" onclick={() => {
-                document.getElementById("connectedBox")!.innerHTML = "connecting...";
-                connectBtn();
+            <button id="connectBtn" class=" w-full h-10 rounded-2xl border-2" onclick={() => {
+                document.getElementById("connectBtn")!.innerHTML = 'Connecting...';
+                if(connected==-1){
+                    scanBtn();
+                }else if(connected==1){
+                    disconnectBtn();
+                }
 
             }}>Connect</button>
 
-            <button class="w-full h-10 rounded-2xl border-2" onclick={() => {
-                document.getElementById("connectedBox")!.innerHTML = "disconnecting...";
-                disconnectBtn();
+ 
 
-            }}>Disconnect</button>
-
-            <button class="w-full h-10 rounded-2xl border-2" onclick={() => {
+            <button style="visibility :hidden;"  class="w-full h-10 rounded-2xl border-2"  id="subBtn" onclick={() => {
                 subBtn();
 
             }}>Subscribe</button>
@@ -257,10 +322,10 @@ function App() {
             }}>Write data</button>
 
             <h1 class="tracking-wide font-semibold text-3xl" >BLE Data: </h1>
-            <p id="connectedBox" class="tracking-wide font-semibold text-xl" >None</p>
+            {/* <p id="connectedBox" class="tracking-wide font-semibold text-xl" >None</p> */}
             <p id="dataBox" class="tracking-wide font-semibold text-xl" >None</p>
 
-            <p id="scanBox" class="tracking-wide font-semibold text-xl" >None</p>
+            {/* <p id="scanBox" class="tracking-wide font-semibold text-xl" >None</p> */}
 
         </main>
     );
