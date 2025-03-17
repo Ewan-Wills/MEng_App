@@ -1,0 +1,3 @@
+[submodule "tauri-plugin-nfcv"]
+	path = tauri-plugin-nfcv
+	url = git@gitlab-student.macs.hw.ac.uk:meng-inearmonitor/tauri-plugin-nfcv.git
